@@ -1,0 +1,31 @@
+{
+  "name": "pairing-bot",
+  "version": "1.0.0",
+  "description": "A bot to track pairing from git commit, post stats and do suggestions.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GitShaffi"
+  },
+  "keywords": [
+    "bot",
+    "pairing",
+    "matrix",
+    "git",
+    "commits",
+    "agile",
+    "pair",
+    "programming",
+    "slack"
+  ],
+  "author": "Shaffi",
+  "license": "ISC",
+  "dependencies": {
+    "botkit": "^0.4.9",
+    "jfs": "^0.2.6"
+  }
+}
