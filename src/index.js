@@ -27,6 +27,14 @@ var bot = controller.spawn({
     token: process.env.token
 }).startRTM();
 
+controller.on('rtm_open',function(bot) {
+  console.log('** The RTM api just connected! **');
+});
+
+controller.on('rtm_close',function(bot) {
+  console.log('** The RTM api just closed **');
+});
+
 controller.hears(['hello', 'hi'], 'direct_message,direct_mention,mention', function (bot, message) {
     bot.reply(message, 'hi');
 });
@@ -54,7 +62,8 @@ controller.hears(['pairing stats'], 'direct_message,direct_mention,mention', fun
     let pairingStats = [];
     pairs.forEach((pair) => {
         let pairInfo = pairingStore[pair];
-        pairingStats.push(`:small_red_triangle: *${pair}* paired *${pairInfo.count} day(s)* ` +
+        let pairStateMessage = (pair.split(',').length > 1)? 'paired' : 'worked solo'
+        pairingStats.push(`:small_red_triangle: *${pair}* ${pairStateMessage} *${pairInfo.count} day(s)* ` +
             `as of ${new Date(pairInfo.timeStamp).toDateString()}`);
     });
 
@@ -75,29 +84,40 @@ controller.hears(['(.*) pushed to branch (.*)\|Compare changes\>(.*)'], ['ambien
     processCommitWith(bot, message);
 });
 
-let isAlreadyUpdatedForCurrentDay = (pairInfo) => {
+const isAlreadyUpdatedForCurrentDay = (pairInfo) => {
     let today = new Date().toDateString();
     let lastUpdatedDate = new Date(pairInfo.timeStamp).toDateString();
     return lastUpdatedDate === today;
 }
 
-let getPairNames = (commitMessage) => {
-    var regexText = /\[([\w]*)(?:\/)?([\w]*)\].*$/;
+const getPairNames = (commitMessage, commitPusher) => {
+    let regexForNamesWithinSquareBraces = '\\[([a-zA-Z]*)(?:\/)?([a-zA-Z]*)\\].*$';
+    let regexForNamesWithColon = '([a-zA-Z]*)(?:\/)?([a-zA-Z]*)\\s?:.*$';
+    let regexForNamesWithHyphen = '([a-zA-Z]*)(?:\/)?([a-zA-Z]*).?\\-\\s.*$';
+    let regexText = new RegExp(`${regexForNamesWithinSquareBraces}|${regexForNamesWithColon}|${regexForNamesWithHyphen}`);
+    
     let match = regexText.exec(commitMessage)
-    return [match[1].toLowerCase().trim(), match[2].toLowerCase().trim()];
+    if (match) {
+        match.shift();
+        let pair = match.filter(name => !!name).map(name => name.toLowerCase().trim());
+        return pair;
+    }
+    return [commitPusher.toLowerCase().trim()];
 }
 
-let processCommitWith = (bot, message) => {
+const processCommitWith = (bot, message) => {
     let commitHashRegex = /\|\b[0-9a-f]{8}\b>:/gm;
     let match;
     let matchFound = false;
-    
     while (match = commitHashRegex.exec(message.attachments[0].text)) {
         let commitIndex = match.index + 11;
-        let commitRawString = message.attachments[0].text.substring(commitIndex);
-        let commitMessage = (commitRawString.split('\n')[0]).trim();
-        let pair = getPairNames(commitMessage);
-        let pairInfo = pairingStore[pair.toString()] || pairingStore[`${pair[1]},${pair[0]}`];
+        let commitRawStrings = message.attachments[0].text.substring(commitIndex).split('\n');
+        let commitMessage = commitRawStrings[0].trim();
+        let commitPusherRaw = commitRawStrings[1].split('-');
+        let commitPusher = commitPusherRaw.pop();
+        let pair = getPairNames(commitMessage, commitPusher);
+        let pairInfo = (pair.length > 1)? pairingStore[pair.toString()] || pairingStore[`${pair[1]},${pair[0]}`]
+                                        : pairingStore[pair.toString()];
         updatePairInfo(pair, pairInfo);
         matchFound = true;
     }
@@ -107,7 +127,7 @@ let processCommitWith = (bot, message) => {
     }
 }
 
-let updatePairInfo = (pair, pairInfo) => {
+const updatePairInfo = (pair, pairInfo) => {
     if (pairInfo) {
         if (!isAlreadyUpdatedForCurrentDay(pairInfo))
             pairInfo.count += 1;
@@ -120,7 +140,7 @@ let updatePairInfo = (pair, pairInfo) => {
     return pairInfo;
 }
 
-let saveCurrentStatToStore = () => {
+const saveCurrentStatToStore = () => {
     db.save('pairingStore', pairingStore, function (err) {
         if (err) {
             console.log('Store update failed');
@@ -128,7 +148,7 @@ let saveCurrentStatToStore = () => {
     });
 }
 
-let formatUptime = (uptime) => {
+const formatUptime = (uptime) => {
     var unit = 'second';
     if (uptime > 60) {
         uptime = uptime / 60;
