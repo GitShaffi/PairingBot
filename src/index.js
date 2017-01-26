@@ -5,7 +5,10 @@ if (!process.env.token) {
 
 var Store = require("jfs");
 var db = new Store("data");
-
+var FuzzyMatching = require('fuzzy-matching');
+ 
+var personList = null;
+ 
 var pairingStore = {};
 
 db.get('pairingStore', function (err, data) {
@@ -14,6 +17,7 @@ db.get('pairingStore', function (err, data) {
         return;
     }
     pairingStore = data;
+    personList = new FuzzyMatching(Object.keys(data));
 });
 
 var Botkit = require('Botkit');
@@ -95,7 +99,7 @@ const getPairNames = (commitMessage, commitPusher) => {
     let regexForNamesWithColon = '([a-zA-Z]*)(?:\/)?([a-zA-Z]*)\\s?:.*$';
     let regexForNamesWithHyphen = '([a-zA-Z]*)(?:\/)?([a-zA-Z]*).?\\-\\s.*$';
     let regexText = new RegExp(`${regexForNamesWithinSquareBraces}|${regexForNamesWithColon}|${regexForNamesWithHyphen}`);
-    
+
     let match = regexText.exec(commitMessage)
     if (match) {
         match.shift();
@@ -132,10 +136,16 @@ const updatePairInfo = (pair, pairInfo) => {
         if (!isAlreadyUpdatedForCurrentDay(pairInfo))
             pairInfo.count += 1;
     } else {
-        pairInfo = pairingStore[pair.toString()] = {
+        let fuzzyResult = [
+                            personList.get(pair.toString(), { maxChanges: 4 }),
+                            personList.get(`${pair[1]},${pair[0]}`, { maxChanges: 4 })
+        ];
+        let nearestNameMatch = fuzzyResult.reduce((prev, current) => (prev.distance > current.distance) ? prev : current);
+        pairInfo = pairingStore[nearestNameMatch.value || pair.toString()] = {
             count: 1,
             timeStamp: new Date().getTime()
         }
+        personList = new FuzzyMatching(Object.keys(pairingStore));
     }
     return pairInfo;
 }
