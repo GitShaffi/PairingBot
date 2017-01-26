@@ -23,7 +23,7 @@
     "slack"
   ],
   "author": "Shaffi",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "botkit": "^0.4.9",
     "fuzzy-matching": "^0.4.3",
