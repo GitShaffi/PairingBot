@@ -22,9 +22,8 @@ Slack bot to track pairing stats of agile pair programming team via git commits.
 After cloning the repository and running `npm install` or `yarn install` inside, you can use the following command to start the bot.
 
 ```sh
-token=<slack-token> npm start
+token=<slack-token> <npm start / yarn start>
 ```
-
 *Pull requests are welcome!*
 
 ## Future extenstions
