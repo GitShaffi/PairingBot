@@ -1,7 +1,7 @@
 var FuzzyMatching = require('fuzzy-matching');
-var JsonFileStore = require('../store/jsonFileStore');
-var Pair = require('./pair');
-var PairStat = require('./pairStat');
+var JsonFileStore = require('./jsonFileStore');
+var Pair = require('../models/pair');
+var PairStat = require('../models/pairStat');
 
 class PairingStore {
 

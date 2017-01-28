@@ -1,5 +1,5 @@
 
-var PairingStore = require('../models/pairingStore');
+var PairingStore = require('../store/pairingStore');
 
 class PairingService {
     
