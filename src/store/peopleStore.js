@@ -48,6 +48,19 @@ class PeopleStore {
         return `Added ${memberName} to list! :thumbsup:`;
     }
 
+    removeMember(memberName) {
+        memberName = memberName.toLowerCase().trim()
+        var index = this.memberList.indexOf(memberName);
+        if (index === -1) {
+            return false;
+        }
+
+        this.memberList.splice(index, 1);
+        this.saveMemberListToJsonStore();
+
+        return true;
+    }
+
     getMemberList() {
         return this.memberList;
     }

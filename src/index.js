@@ -30,7 +30,7 @@ controller.on('rtm_close',function(bot) {
   console.log('** The RTM api just closed **');
 });
 
-controller.hears([/\bhello\b/i, /\bhi\b/i], 'direct_message,direct_mention,mention', function (bot, message) {
+controller.hears([/\bhello\b/i, /\bhi\b/i], 'direct_message,direct_mention', function (bot, message) {
     bot.reply(message, 'hello');
 });
 
@@ -39,7 +39,7 @@ controller.on('bot_channel_join', function(bot, message) {
     isTeamConfigured(bot, message);
 });
 
-controller.hears([/list members/i], 'direct_message,direct_mention,mention', function (bot, message) {
+controller.hears([/list members/i], 'direct_message,direct_mention', function (bot, message) {
     if(peopleStore.getMemberList().length === 0) {
         bot.reply(message, 'No members added yet! :neutral_face:');
         return;
@@ -50,28 +50,68 @@ controller.hears([/list members/i], 'direct_message,direct_mention,mention', fun
     bot.reply(message, memberCountStatus + members);
 });
 
-controller.hears([/set member count ([0-9]*)/i], 'direct_message,direct_mention,mention', function (bot, message) {
+controller.hears([/set member count ([0-9]*)/i], 'direct_message,direct_mention', function (bot, message) {
     let response = peopleStore.setExpectedMemberCount(message.match[1]) ? 
                         'Done :thumbsup:' : 'You are not allowed to set invalid count.'
     bot.reply(message, response);
 });
 
-controller.hears([/add member ([a-zA-Z]*)/i], 'direct_message,direct_mention,mention', function (bot, message) {
+controller.hears([/add member ([a-zA-Z]*)/i], 'direct_message,direct_mention', function (bot, message) {
     bot.reply(message, peopleStore.addMember(message.match[1]));
 });
 
-controller.hears([/add solo ([a-zA-Z]*)/i], 'direct_message,direct_mention,mention', function (bot, message) {
+controller.hears([/remove member ([a-zA-Z]*)/i], 'direct_message,direct_mention', function (bot, message) {
+    let personName = message.match[1];
+    if (!peopleStore.removeMember(personName)) {
+        bot.reply(message, 'Member doesn\'t exist! :confused:');
+        return;
+    }
+    
+    bot.startConversation(message, function(err, convo) {
+        convo.ask(`Removed ${personName.toLowerCase().trim()} from list! :thumbsup:\nYour team had ${peopleStore.getExpectedMemberCount()} members before. Would you like to reduce it by 1?`,
+                    [{
+                        pattern: bot.utterances.yes,
+                        callback: function(response, convo) {
+                            peopleStore.setExpectedMemberCount(peopleStore.getExpectedMemberCount() - 1);
+                            convo.next();
+                        }
+                    }, {
+                        pattern: bot.utterances.no,
+                        callback: function(response, convo) {
+                            convo.stop();
+                        }
+                    }, {
+                        default: true,
+                        callback: function(response, convo) {
+                            convo.repeat();
+                            convo.next();
+                        }
+                    }
+        ]);
+
+        convo.on('end', function(convo) {
+            if (convo.status == 'completed') {
+                bot.reply(message, 'OK! I will update my dossier! :thumbsup:');
+            } else {
+                bot.reply(message, 'I cannot track pairing untill the team list is complete!'
+                                    + ' You can `add member` or `set team count` to resume tracking anytime.');
+            }
+        });
+    });
+});
+
+controller.hears([/add solo ([a-zA-Z]*)/i], 'direct_message,direct_mention', function (bot, message) {
     pairingService.addPair([message.match[1]]);
     bot.reply(message, 'Done :thumbsup:');
 });
 
-controller.hears([/add pair ([a-zA-Z]*)(?:,\s?)([a-zA-Z]*)/i], 'direct_message,direct_mention,mention', function (bot, message) {
+controller.hears([/add pair ([a-zA-Z]*)(?:,\s?)([a-zA-Z]*)/i], 'direct_message,direct_mention', function (bot, message) {
     pairingService.addPair([match[1], match[2]]);
     bot.reply(message, 'Done :thumbsup:');
 });
 
 controller.hears(['uptime', 'identify yourself', 'who are you', 'what is your name'],
-    'direct_message,direct_mention,mention', function (bot, message) {
+    'direct_message,direct_mention', function (bot, message) {
 
         var hostname = os.hostname();
         var uptime = commonUtils.formatTime(process.uptime());
@@ -82,7 +122,7 @@ controller.hears(['uptime', 'identify yourself', 'who are you', 'what is your na
 
     });
 
-controller.hears([/pairing stats/i], 'direct_message,direct_mention,mention', function (bot, message) {
+controller.hears([/pairing stats/i], 'direct_message,direct_mention', function (bot, message) {
     let pairStats = pairingService.getPairingStats();
     
     if (!pairStats) {
