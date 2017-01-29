@@ -7,6 +7,7 @@ var Botkit = require('Botkit');
 var os = require('os');
 var PairingService = require('./service/pairingService');
 var CommonUtils = require('./utils/commonUtils');
+var PairingStore = require('./store/pairingStore');
 var PeopleStore = require('./store/peopleStore')
 
 var controller = Botkit.slackbot({
@@ -18,9 +19,10 @@ var bot = controller.spawn({
     retry: 5
 }).startRTM();
 
-var pairingService = new PairingService();
-var commonUtils = new CommonUtils();
 var peopleStore = new PeopleStore();
+var pairingStore = new PairingStore();
+var pairingService = new PairingService(peopleStore, pairingStore);
+var commonUtils = new CommonUtils();
 
 controller.on('rtm_open',function(bot) {
   console.log('** The RTM api just connected! **');
@@ -57,7 +59,12 @@ controller.hears([/set member count ([0-9]*)/i], 'direct_message,direct_mention'
 });
 
 controller.hears([/add member ([a-zA-Z]*)/i], 'direct_message,direct_mention', function (bot, message) {
-    bot.reply(message, peopleStore.addMember(message.match[1]));
+    let personName = message.match[1];
+    if(peopleStore.addMember(personName)) {
+        bot.reply(message, `Added ${personName.toLowerCase().trim()} to list! :thumbsup:`);
+        return;
+    }
+    bot.reply(message, 'Member already exist! :confused:');
 });
 
 controller.hears([/remove member ([a-zA-Z]*)/i], 'direct_message,direct_mention', function (bot, message) {
@@ -101,13 +108,21 @@ controller.hears([/remove member ([a-zA-Z]*)/i], 'direct_message,direct_mention'
 });
 
 controller.hears([/add solo ([a-zA-Z]*)/i], 'direct_message,direct_mention', function (bot, message) {
-    pairingService.addPair([message.match[1]]);
-    bot.reply(message, 'Done :thumbsup:');
+    let pairName = message.match[1];
+    if(pairingService.addPair([pairName])) {
+        bot.reply(message, 'Done :thumbsup:');
+        return;
+    }
+    bot.reply(message, `Unable to identify ${pairName} in the team :white_frowning_face:`);
 });
 
 controller.hears([/add pair ([a-zA-Z]*)(?:,\s?)([a-zA-Z]*)/i], 'direct_message,direct_mention', function (bot, message) {
-    pairingService.addPair([match[1], match[2]]);
-    bot.reply(message, 'Done :thumbsup:');
+    let pair = [match[1], match[2]];
+    if(pairingService.addPair(pair)) {
+        bot.reply(message, 'Done :thumbsup:');
+        return;
+    }
+    bot.reply(message, `Unable to identify ${pair.toString()} in the team :white_frowning_face:`);
 });
 
 controller.hears(['uptime', 'identify yourself', 'who are you', 'what is your name'],
@@ -139,6 +154,11 @@ controller.hears([/pairing stats/i], 'direct_message,direct_mention', function (
 
     bot.reply(message, pairingStatMessages.join('\n'));
 });
+
+controller.hears([/^(bye|see you later|tata|ciao|adieu)/i], ['direct_message,direct_mention'], function (bot, message) {
+    bot.reply(message, 'Thanks. Have a good time! :wave:');
+});
+
 
 controller.on('bot_message', function (bot, message) {
     let gitMessageRegex = /(.*) pushed to branch (.*)\|Compare changes\>(.*)/;

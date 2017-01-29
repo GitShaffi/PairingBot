@@ -1,10 +1,8 @@
-
-var PairingStore = require('../store/pairingStore');
-
 class PairingService {
     
-    constructor() {
-        this.pairingStore = new PairingStore();
+    constructor(peopleStore, pairingStore) {
+        this.peopleStore = peopleStore;
+        this.pairingStore = pairingStore;
     }
 
     processCommitFrom(message) {
@@ -18,7 +16,7 @@ class PairingService {
             let commitPusherRaw = commitRawStrings[1].split('-');
             let commitPusher = commitPusherRaw.pop();
             let pair = this._extractPairNames(commitMessage, commitPusher);
-            this.pairingStore.updatePairInfo(pair);
+            this._updatePairInfoFor(pair);
             matchFound = true;
         }
 
@@ -33,8 +31,25 @@ class PairingService {
 
     addPair(pair) {
         pair = pair.filter(name => !!name).map(name => name.toLowerCase().trim());
-        this.pairingStore.updatePairInfo(pair);
+        
+        if(!this._updatePairInfoFor(pair))
+            return false;
+        
         this.pairingStore.saveCurrentStatToJsonStore();
+        return true;
+    }
+
+    _updatePairInfoFor(pair) {
+        let pairMatch = this._findNearestMatch(pair);
+        
+        if(pairMatch.filter(name => !name).length !== 0) {
+            console.log('Unable to identify match for pair:', pair.toString());
+            return false;
+        }
+
+        let pairInfo = this._findPairInfo(pairMatch);
+        this.pairingStore.updatePairInfo(pairMatch, pairInfo);
+        return true;
     }
 
     _extractPairNames(commitMessage, commitPusher) {
@@ -50,6 +65,17 @@ class PairingService {
             return pair;
         }
         return [commitPusher.toLowerCase().trim()];
+    }
+
+    _findPairInfo(pairMatch) {
+        let pairInfo = (pairMatch.length > 1)? this.pairingStore.getPairInfo(pairMatch.toString()) 
+                                                        || this.pairingStore.getPairInfo(`${pairMatch[1]},${pairMatch[0]}`)
+                                            : this.pairingStore.getPairInfo(pairMatch.toString());
+        return pairInfo;
+    }
+
+    _findNearestMatch(pair) {
+        return pair.map(name => this.peopleStore.getMembersFuzzyMatch(name).value);
     }
 }
 

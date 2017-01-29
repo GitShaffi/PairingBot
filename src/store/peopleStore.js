@@ -1,10 +1,13 @@
+var FuzzyMatching = require('fuzzy-matching');
 var JsonFileStore = require('./jsonFileStore');
 
 class PeopleStore {
 
     constructor() {
         this.fileStoreName = 'peopleStore';
+        this.maxCharDeviationForFuzzy = 4;
         this.jsonStore = new JsonFileStore();
+        this.memberFuzzyList = new FuzzyMatching();
         this.memberList = [];
         this.expectedMemberCount = 0;
         this._initializePeopleStore();
@@ -38,14 +41,15 @@ class PeopleStore {
     addMember(memberName) {
         memberName = memberName.toLowerCase().trim()
         if(this.memberList.includes(memberName)){
-            return 'Member already exist! :confused:';
+            return false;
         }
 
         if(this.memberList.length === this.expectedMemberCount)
             this.expectedMemberCount += 1;
         this.memberList.push(memberName);
+        this.memberFuzzyList = new FuzzyMatching(this.memberList);
         this.saveMemberListToJsonStore();
-        return `Added ${memberName} to list! :thumbsup:`;
+        return true;
     }
 
     removeMember(memberName) {
@@ -56,6 +60,7 @@ class PeopleStore {
         }
 
         this.memberList.splice(index, 1);
+        this.memberFuzzyList = new FuzzyMatching(this.memberList);
         this.saveMemberListToJsonStore();
 
         return true;
@@ -65,6 +70,10 @@ class PeopleStore {
         return this.memberList;
     }
 
+    getMembersFuzzyMatch(pairString) {
+        return this.memberFuzzyList.get(pairString, { maxChanges: this.maxCharDeviationForFuzzy });
+    }
+
     _initializePeopleStore() {
         this.jsonStore.getData(this.fileStoreName, (data, err) => {
             if (err) {
@@ -72,6 +81,7 @@ class PeopleStore {
                 return;
             }
             this.memberList = data.memberList;
+            this.memberFuzzyList = new FuzzyMatching(data.memberList);
             this.expectedMemberCount = Number(data.expectedMemberCount);
         });
     }

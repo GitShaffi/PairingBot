@@ -1,4 +1,3 @@
-var FuzzyMatching = require('fuzzy-matching');
 var JsonFileStore = require('./jsonFileStore');
 var Pair = require('../models/pair');
 var PairStat = require('../models/pairStat');
@@ -8,7 +7,6 @@ class PairingStore {
     constructor() {
         this.fileStoreName = 'pairingStore';
         this.jsonStore = new JsonFileStore();
-        this.personList = new FuzzyMatching();
         this.pairingStore = {};
         this.pairingStats = null;
         this._initializePairingStore();
@@ -39,12 +37,12 @@ class PairingStore {
         return pairingStats;
     }
 
-    updatePairInfo(pair) {
+    getPairInfo(pairString) {
+        return this.pairingStore[pairString];
+    }
 
-        let pairInfo = (pair.length > 1)? this.pairingStore[pair.toString()] || this.pairingStore[`${pair[1]},${pair[0]}`]
-                                            : this.pairingStore[pair.toString()];
-        
-        if (pairInfo || (pairInfo = this.pairingStore[this._findNearestMatch(pair)])) {
+    updatePairInfo(pair, pairInfo) {
+        if (pairInfo) {
             if (!this._isAlreadyUpdatedForCurrentDay(pairInfo)) {
                 pairInfo.count += 1;
                 pairInfo.timeStamp = new Date().getTime();
@@ -54,21 +52,10 @@ class PairingStore {
                 count: 1,
                 timeStamp: new Date().getTime()
             }
-            this.personList = new FuzzyMatching(Object.keys(this.pairingStore));
         }
 
     }
     
-    _findNearestMatch(pair) {
-        let fuzzyResult = [
-            this.personList.get(pair.toString(), { maxChanges: 4 }),
-            this.personList.get(`${pair[1]},${pair[0]}`, { maxChanges: 4 })
-        ];
-        let nearestNameMatch = fuzzyResult.reduce(
-            (prev, current) => (prev.distance > current.distance) ? prev : current);
-        return nearestNameMatch.value;
-    }
-
     _isAlreadyUpdatedForCurrentDay(pairInfo) {
         let today = new Date().toDateString();
         let lastUpdatedDate = new Date(pairInfo.timeStamp).toDateString();
@@ -82,7 +69,6 @@ class PairingStore {
                 return;
             }
             this.pairingStore = data;
-            this.personList = new FuzzyMatching(Object.keys(data));
         });
     }
 }
