@@ -14,6 +14,8 @@ Slack bot to track pairing stats of agile pair programming team via git commits.
     - __`[StoryCardNumber] Person1/Person2: commit message description`__
     - __`[StoryCardNumber] Person1/Person2 - commit message description`__
 - Get pairing information with the message `pairing stats?` as direct_message or with direct_mention to `@PairingBot`.
+- Creare your team members list with `set member count` and `add member` commands.
+- You can also do manual update to pairing matrix for the day with `add solo` and `add pair` commands.
 - Works right out of the box, just keep calm and do pair programming.
 
 ## Supported messages
@@ -27,6 +29,7 @@ Slack bot to track pairing stats of agile pair programming team via git commits.
 - `add pair <name1,name2>`
 - `pairing stats?`
 - `uptime, who are you?`
+- `bye, see you later, tata, ciao, adieu`
 
 ## Install and Setup instructions
 
