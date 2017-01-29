@@ -22,8 +22,13 @@ class PeopleStore {
     }
 
     setExpectedMemberCount(count) {
+        if(this.memberList.length > count){
+            return false;
+        }
+
         this.expectedMemberCount = count;
         this.saveMemberListToJsonStore();
+        return true;
     }
 
     getExpectedMemberCount() {

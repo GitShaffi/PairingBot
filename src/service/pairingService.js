@@ -31,6 +31,12 @@ class PairingService {
         return this.pairingStore.getPairingStats();
     }
 
+    addPair(pair) {
+        pair = pair.filter(name => !!name).map(name => name.toLowerCase().trim());
+        this.pairingStore.updatePairInfo(pair);
+        this.pairingStore.saveCurrentStatToJsonStore();
+    }
+
     _extractPairNames(commitMessage, commitPusher) {
         let regexForNamesWithinSquareBraces = '\\[([a-zA-Z]*)(?:\/)?([a-zA-Z]*)\\].*$';
         let regexForNamesWithColon = '([a-zA-Z]*)(?:\/)?([a-zA-Z]*)\\s?:.*$';

@@ -50,13 +50,24 @@ controller.hears([/list members/i], 'direct_message,direct_mention,mention', fun
     bot.reply(message, memberCountStatus + members);
 });
 
-controller.hears([/set member count ([0-9]*)(?:\s.*)*/i], 'direct_message,direct_mention,mention', function (bot, message) {
-    peopleStore.setExpectedMemberCount(message.match[1])
+controller.hears([/set member count ([0-9]*)/i], 'direct_message,direct_mention,mention', function (bot, message) {
+    let response = peopleStore.setExpectedMemberCount(message.match[1]) ? 
+                        'Done :thumbsup:' : 'You are not allowed to set invalid count.'
+    bot.reply(message, response);
+});
+
+controller.hears([/add member ([a-zA-Z]*)/i], 'direct_message,direct_mention,mention', function (bot, message) {
+    bot.reply(message, peopleStore.addMember(message.match[1]));
+});
+
+controller.hears([/add solo ([a-zA-Z]*)/i], 'direct_message,direct_mention,mention', function (bot, message) {
+    pairingService.addPair([message.match[1]]);
     bot.reply(message, 'Done :thumbsup:');
 });
 
-controller.hears([/add member ([a-zA-Z]*)(?:\s.*)*/i], 'direct_message,direct_mention,mention', function (bot, message) {
-    bot.reply(message, peopleStore.addMember(message.match[1]));
+controller.hears([/add pair ([a-zA-Z]*)(?:,\s?)([a-zA-Z]*)/i], 'direct_message,direct_mention,mention', function (bot, message) {
+    pairingService.addPair([match[1], match[2]]);
+    bot.reply(message, 'Done :thumbsup:');
 });
 
 controller.hears(['uptime', 'identify yourself', 'who are you', 'what is your name'],
