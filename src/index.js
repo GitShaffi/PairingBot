@@ -5,6 +5,7 @@ if (!process.env.token) {
 
 var Botkit = require('Botkit');
 var os = require('os');
+var randomColor = require('randomcolor');
 var PairingService = require('./service/pairingService');
 var CommonUtils = require('./utils/commonUtils');
 var PairingStore = require('./store/pairingStore');
@@ -138,21 +139,14 @@ controller.hears(['uptime', 'identify yourself', 'who are you', 'what is your na
     });
 
 controller.hears([/pairing stats/i], 'direct_message,direct_mention', function (bot, message) {
-    let pairStats = pairingService.getPairingStats();
-    
-    if (!pairStats) {
+    if (!pairingService.getPairingStats()) {
         bot.reply(message, 'Sorry, no stats available currently! :disappointed:');
         return;
     }
 
-    let pairingStatMessages = [];
-    pairStats.map(pairStat => {
-        const pairStateMessage = pairStat.getPair().isSolo()? 'worked solo' : 'paired';
-        pairingStatMessages.push(`:small_red_triangle: *${pairStat.getPair()}* ${pairStateMessage} *${pairStat.getPairInfo().count} day(s)* `
-                        + `as of ${new Date(pairStat.getPairInfo().timeStamp).toDateString()}`);
-    })    
+    let attachments = getPairingStatsAsSlackFormattedMessage();
 
-    bot.reply(message, pairingStatMessages.join('\n'));
+    bot.reply(message, {attachments});
 });
 
 controller.hears([/^(bye|see you later|tata|ciao|adieu)/i], ['direct_message,direct_mention'], function (bot, message) {
@@ -187,4 +181,43 @@ const isTeamConfigured = (bot, message) => {
     }
 
     return true;
+}
+
+const getPairingStatsAsSlackFormattedMessage = () => {
+    let pairStats = pairingService.getPairingStats();
+    let message = peopleStore.getMemberList().map(member => {
+        let mostRecentUpdatedAt = 0;
+        
+        let fields = pairStats.filter(pairStat => pairStat.getPair().contains(member))
+                          .map(pairStat => {
+                                let otherPair = pairStat.getPair().getOtherPairOf(member);
+                                let columnTitle = (!otherPair)? 'Worked Solo' : otherPair;
+                                let pairedCount = `${pairStat.getPairInfo().count} day`;
+                                
+                                if (pairStat.getPairInfo().count > 1)
+                                    pairedCount = `${pairedCount}s`;
+                                
+                                mostRecentUpdatedAt = Math.max(pairStat.getPairInfo().timeStamp, mostRecentUpdatedAt); 
+
+                                return { title: columnTitle, value: pairedCount, short: true };
+                            });
+        
+        if(!fields.length)
+            return;
+        
+        let updatedAtInEpoch = mostRecentUpdatedAt/1000;
+        
+        return {
+            fallback: "Attachments not supported in your app. Please contact slack support for help.",
+            color: randomColor({luminosity: 'dark'}),
+            pretext: '-----------------------------------------------------------------------------------',
+            title: `Pairing stats for ${member.toUpperCase()}`,
+            text: '---------------------------------------',
+            footer: 'Last updated (UTC)',
+            ts: updatedAtInEpoch,
+            fields
+        }
+    }).filter(attachment => !!attachment);
+
+    return message;
 }
