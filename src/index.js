@@ -153,6 +153,21 @@ controller.hears([/^(bye|see you later|tata|ciao|adieu)/i], ['direct_message,dir
     bot.reply(message, 'Thanks. Have a good time! :wave:');
 });
 
+controller.hears([/^help/i], ['direct_message,direct_mention'], function (bot, message) {
+    response = "Once you invite me to the commit channel, I start listening to git webhook.\n Below are the few messages to which I can respond: \n\
+            • `hello, hi` \n\
+            • `list members` \n\
+            • `set member count <count>` \n\
+            • `add member <name>` \n\
+            • `remove member <name>` \n\
+            • `add solo <name>` \n\
+            • `add pair <name1,name2>` \n\
+            • `pairing stats` \n\
+            • `uptime, who are you?, what is your name?, identify yourself` \n\
+            • `bye, see you later, tata, ciao, adieu`";
+
+    bot.reply(message, response);
+});
 
 controller.on('bot_message', function (bot, message) {
     let gitMessageRegex = /(.*) pushed to branch (.*)\|Compare changes\>(.*)/;
