@@ -177,7 +177,8 @@ controller.on('bot_message', function (bot, message) {
 });
 
 controller.hears(['.*'], ['direct_message,direct_mention'], function (bot, message) {
-    bot.reply(message, 'Sorry, I don\'t have any matching conversation for that.');
+    bot.reply(message, 'Sorry, I don\'t have any matching conversation for that.\n'
+                            + 'Message with `help` to see list of supported conversations');
 });
 
 const isTeamConfigured = (bot, message) => {

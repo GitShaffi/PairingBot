@@ -7,14 +7,14 @@ class PairingService {
 
     processCommitFrom(message) {
         let commitHashRegex = /\|\b[0-9a-f]{8}\b>:/gm;
+        let commitMessageRegex = /(.*)\n?-(.*)/g;
         let match;
         let matchFound = false;
         while (match = commitHashRegex.exec(message.attachments[0].text)) {
             let commitIndex = match.index + 11;
-            let commitRawStrings = message.attachments[0].text.substring(commitIndex).split('\n');
-            let commitMessage = commitRawStrings[0].trim();
-            let commitPusherRaw = commitRawStrings[1].split('-');
-            let commitPusher = commitPusherRaw.pop();
+            let commitRawStrings = commitMessageRegex.exec(message.attachments[0].text.substring(commitIndex));
+            let commitMessage = commitRawStrings[1].trim();
+            let commitPusher = commitRawStrings[2].trim();
             let pair = this._extractPairNames(commitMessage, commitPusher);
             this._updatePairInfoFor(pair);
             matchFound = true;
