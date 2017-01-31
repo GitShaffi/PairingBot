@@ -176,9 +176,8 @@ controller.on('bot_message', function (bot, message) {
     }
 });
 
-controller.hears(['(.*) pushed to branch (.*)\|Compare changes\>(.*)'], ['ambient'], function (bot, message) {
-    if(isTeamConfigured(bot, message))
-        pairingService.processCommitFrom(message);
+controller.hears(['.*'], ['direct_message,direct_mention'], function (bot, message) {
+    bot.reply(message, 'Sorry, I don\'t have any matching conversation for that.');
 });
 
 const isTeamConfigured = (bot, message) => {
