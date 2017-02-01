@@ -7,7 +7,7 @@ class PairingService {
 
     processCommitFrom(message) {
         let commitHashRegex = /\|\b[0-9a-f]{8}\b>:/gm;
-        let commitMessageRegex = /(.*)\n?-(.*)/g;
+        let commitMessageRegex = /(.*)(?:\n\s|\s)-(.*)/g;
         let match;
         let matchFound = false;
         while (match = commitHashRegex.exec(message.attachments[0].text)) {
