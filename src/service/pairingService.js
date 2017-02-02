@@ -6,19 +6,23 @@ class PairingService {
     }
 
     processCommitFrom(message) {
-        let commitHashRegex = /\|\b[0-9a-f]{8}\b>:/gm;
+        let commitHashRegex = /\|\b[0-9a-f]{8}\b>:/g;
         let commitMessageRegex = /(.*)(?:\n\s|\s)-(.*)/g;
-        let match;
+        let commitHashLength = 11;
         let matchFound = false;
-        while (match = commitHashRegex.exec(message.attachments[0].text)) {
-            let commitIndex = match.index + 11;
-            let commitRawStrings = commitMessageRegex.exec(message.attachments[0].text.substring(commitIndex));
-            let commitMessage = commitRawStrings[1].trim();
-            let commitPusher = commitRawStrings[2].trim();
-            let pair = this._extractPairNames(commitMessage, commitPusher);
-            this._updatePairInfoFor(pair);
-            matchFound = true;
-        }
+        let commitTexts = message.attachments[0].text.split(/\S\n\S/)
+        commitTexts.forEach(commitText => {
+            let commitIndex = commitText.search(commitHashRegex) + commitHashLength;
+            let commitDataWithAuthorName = commitText.substring(commitIndex);
+            let commitRawStrings = commitMessageRegex.exec(commitDataWithAuthorName);
+            if(commitRawStrings && commitRawStrings.length > 1) {
+                let commitMessage = commitRawStrings[1].trim();
+                let commitPusher = commitRawStrings[2].trim();
+                let pair = this._extractPairNames(commitMessage, commitPusher);
+                this._updatePairInfoFor(pair);
+                matchFound = true;
+            }
+        }); 
 
         if (matchFound) {
             this.pairingStore.saveCurrentStatToJsonStore();

@@ -228,7 +228,7 @@ const getPairingStatsAsSlackFormattedMessage = () => {
             pretext: '-----------------------------------------------------------------------------------',
             title: `Pairing stats for ${member.toUpperCase()}`,
             text: '---------------------------------------',
-            footer: 'Last updated (UTC)',
+            footer: 'Last updated',
             ts: updatedAtInEpoch,
             fields
         }
