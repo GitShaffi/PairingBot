@@ -25,7 +25,8 @@ class PeopleStore {
     }
 
     setExpectedMemberCount(count) {
-        if(this.memberList.length > count){
+        count = Number(count);
+        if(!Number.isNaN(count) && this.memberList.length > count){
             return false;
         }
 

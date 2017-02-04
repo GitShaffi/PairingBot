@@ -3,27 +3,27 @@ if (!process.env.token) {
     process.exit(1);
 }
 
-var Botkit = require('Botkit');
-var os = require('os');
-var randomColor = require('randomcolor');
-var PairingService = require('./service/pairingService');
-var CommonUtils = require('./utils/commonUtils');
-var PairingStore = require('./store/pairingStore');
-var PeopleStore = require('./store/peopleStore')
+const Botkit = require('Botkit');
+const os = require('os');
+const randomColor = require('randomcolor');
+const PairingService = require('./service/pairingService');
+const CommonUtils = require('./utils/commonUtils');
+const PairingStore = require('./store/pairingStore');
+const PeopleStore = require('./store/peopleStore')
 
-var controller = Botkit.slackbot({
+const controller = Botkit.slackbot({
     debug: false
 });
 
-var bot = controller.spawn({
+const bot = controller.spawn({
     token: process.env.token,
     retry: 5
 }).startRTM();
 
-var peopleStore = new PeopleStore();
-var pairingStore = new PairingStore();
-var pairingService = new PairingService(peopleStore, pairingStore);
-var commonUtils = new CommonUtils();
+const peopleStore = new PeopleStore();
+const pairingStore = new PairingStore();
+const pairingService = new PairingService(peopleStore, pairingStore);
+const commonUtils = new CommonUtils();
 
 controller.on('rtm_open',function(bot) {
   console.log('** The RTM api just connected! **');
@@ -54,8 +54,9 @@ controller.hears([/list members/i], 'direct_message,direct_mention', function (b
 });
 
 controller.hears([/set member count ([0-9]*)/i], 'direct_message,direct_mention', function (bot, message) {
-    let response = peopleStore.setExpectedMemberCount(message.match[1]) ? 
-                        'Done :thumbsup:' : 'You are not allowed to set invalid count.'
+    let count = message.match[1];
+    let response = peopleStore.setExpectedMemberCount(count) ? 
+                        `Cool! I have set the member count to ${count} :thumbsup:` : 'You are not allowed to set invalid count.'
     bot.reply(message, response);
 });
 
@@ -111,7 +112,7 @@ controller.hears([/remove member ([a-zA-Z]*)/i], 'direct_message,direct_mention'
 controller.hears([/add solo ([a-zA-Z]*)/i], 'direct_message,direct_mention', function (bot, message) {
     let pairName = message.match[1];
     if(pairingService.addPair([pairName])) {
-        bot.reply(message, 'Done :thumbsup:');
+        bot.reply(message, `Oh! we have a lone wolf today!\nHave updated ${pairName} to the stats :thumbsup:`);
         return;
     }
     bot.reply(message, `Unable to identify ${pairName} in the team :white_frowning_face:`);
@@ -120,7 +121,7 @@ controller.hears([/add solo ([a-zA-Z]*)/i], 'direct_message,direct_mention', fun
 controller.hears([/add pair ([a-zA-Z]*)(?:,\s?)([a-zA-Z]*)/i], 'direct_message,direct_mention', function (bot, message) {
     let pair = [match[1], match[2]];
     if(pairingService.addPair(pair)) {
-        bot.reply(message, 'Done :thumbsup:');
+        bot.reply(message, `Added ${pair[0]} and ${pair[1]} to today's stats :thumbsup:`);
         return;
     }
     bot.reply(message, `Unable to identify ${pair.toString()} in the team :white_frowning_face:`);
@@ -129,8 +130,8 @@ controller.hears([/add pair ([a-zA-Z]*)(?:,\s?)([a-zA-Z]*)/i], 'direct_message,d
 controller.hears(['uptime', 'identify yourself', 'who are you', 'what is your name'],
     'direct_message,direct_mention', function (bot, message) {
 
-        var hostname = os.hostname();
-        var uptime = commonUtils.formatTime(process.uptime());
+        const hostname = os.hostname();
+        const uptime = commonUtils.formatTime(process.uptime());
 
         bot.reply(message,
             ':robot_face: I am a bot named <@' + bot.identity.name +
@@ -154,7 +155,14 @@ controller.hears([/^(bye|see you later|tata|ciao|adieu)/i], ['direct_message,dir
 });
 
 controller.hears([/^help/i], ['direct_message,direct_mention'], function (bot, message) {
-    response = "Once you invite me to the commit channel, I start listening to git webhook.\n Below are the few messages to which I can respond: \n\
+    response = "Once you invite me to the commit channel, I start listening to git webhook.\n \
+    Acceptable commit message samples\n\
+            • `[StoryCardNumber] [Person1/Person2] commit message description`\n\
+            • `[StoryCardNumber] [Person1] commit message description`\n\
+            • `[Person1/Person2] commit message description`\n\
+            • `[StoryCardNumber] Person1/Person2: commit message description`\n\
+            • `[StoryCardNumber] Person1/Person2 - commit message description`\n\
+    Below are the few messages to which I can respond: \n\
             • `hello, hi` \n\
             • `list members` \n\
             • `set member count <count>` \n\
