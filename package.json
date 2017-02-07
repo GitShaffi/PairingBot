@@ -1,6 +1,6 @@
 {
   "name": "pairing-bot",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A bot to track pairing from git commit, post stats and do suggestions.",
   "main": "index.js",
   "scripts": {

@@ -158,10 +158,11 @@ controller.hears([/^help/i], ['direct_message,direct_mention'], function (bot, m
     response = "Once you invite me to the commit channel, I start listening to git webhook.\n \
     Acceptable commit message samples\n\
             • `[StoryCardNumber] [Person1/Person2] commit message description`\n\
+            • `[StoryCardNumber] [Person1|Person2] commit message description`\n\
             • `[StoryCardNumber] [Person1] commit message description`\n\
             • `[Person1/Person2] commit message description`\n\
-            • `[StoryCardNumber] Person1/Person2: commit message description`\n\
-            • `[StoryCardNumber] Person1/Person2 - commit message description`\n\
+            • `Person1/Person2: commit message description`\n\
+            • `Person1/Person2 - commit message description`\n\
     Below are the few messages to which I can respond: \n\
             • `hello, hi` \n\
             • `list members` \n\

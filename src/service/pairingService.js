@@ -57,9 +57,9 @@ class PairingService {
     }
 
     _extractPairNames(commitMessage, commitPusher) {
-        let regexForNamesWithinSquareBraces = '\\[([a-zA-Z]*)(?:\/)?([a-zA-Z]*)\\].*$';
-        let regexForNamesWithColon = '([a-zA-Z]*)(?:\/)?([a-zA-Z]*)\\s?:.*$';
-        let regexForNamesWithHyphen = '([a-zA-Z]*)(?:\/)?([a-zA-Z]*).?\\-\\s.*$';
+        let regexForNamesWithinSquareBraces = '\\[([a-zA-Z]*)(?:\s?(?:\/|\|)\s?)?([a-zA-Z]*)\\].*$';
+        let regexForNamesWithColon = '([a-zA-Z]*)(?:\s?(?:\/|\|)\s?)?([a-zA-Z]*)\\s?:.*$';
+        let regexForNamesWithHyphen = '([a-zA-Z]*)(?:\s?(?:\/|\|)\s?)?([a-zA-Z]*).?\\-\\s.*$';
         let regexText = new RegExp(`${regexForNamesWithinSquareBraces}|${regexForNamesWithColon}|${regexForNamesWithHyphen}`);
 
         let match = regexText.exec(commitMessage)
