@@ -16,6 +16,12 @@ class CommonUtils {
         time = time + ' ' + unit;
         return time;
     }
+
+    isToday(timeStamp) {
+        let today = new Date().toDateString();
+        let lastUpdatedDate = new Date(timeStamp).toDateString();
+        return lastUpdatedDate === today;
+    }
 }
 
 module.exports = CommonUtils;

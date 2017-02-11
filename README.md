@@ -29,6 +29,7 @@ Slack bot to track pairing stats of agile pair programming team via git commits.
 - `add solo <name>`
 - `add pair <name1,name2>`
 - `pairing stats?`
+- `missing stats?`
 - `uptime, who are you?`
 - `bye, see you later, tata, ciao, adieu`
 

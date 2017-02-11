@@ -1,6 +1,7 @@
-var JsonFileStore = require('./jsonFileStore');
-var Pair = require('../models/pair');
-var PairStat = require('../models/pairStat');
+const JsonFileStore = require('./jsonFileStore');
+const Pair = require('../models/pair');
+const PairStat = require('../models/pairStat');
+const CommonUtils = require('../utils/commonUtils');
 
 class PairingStore {
 
@@ -9,6 +10,7 @@ class PairingStore {
         this.jsonStore = new JsonFileStore();
         this.pairingStore = {};
         this.pairingStats = null;
+        this.commonUtils = new CommonUtils();
         this._initializePairingStore();
     }
 
@@ -37,6 +39,20 @@ class PairingStore {
         return pairingStats;
     }
 
+    getPairsWithStatsUpdatedToday() {
+        let pairs = Object.keys(this.pairingStore);
+
+        if (!pairs.length) {
+            return null;
+        }
+        const pairsWithStatsUpdatedToday = pairs.filter(pairString => {
+            let pairInfo = this.pairingStore[pairString];
+            return this.commonUtils.isToday(pairInfo.timeStamp);
+        }).map((pairString) => new Pair(pairString));
+
+        return pairsWithStatsUpdatedToday;
+    }
+
     getPairInfo(pairString) {
         return this.pairingStore[pairString];
     }
@@ -57,9 +73,7 @@ class PairingStore {
     }
     
     _isAlreadyUpdatedForCurrentDay(pairInfo) {
-        let today = new Date().toDateString();
-        let lastUpdatedDate = new Date(pairInfo.timeStamp).toDateString();
-        return lastUpdatedDate === today;
+        return this.commonUtils.isToday(pairInfo.timeStamp);
     }
 
     _initializePairingStore() {

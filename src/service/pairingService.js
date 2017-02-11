@@ -33,6 +33,15 @@ class PairingService {
         return this.pairingStore.getPairingStats();
     }
 
+    getMembersWithoutStatsUpdatedToday(){
+        const updatedMembers = this.pairingStore.getPairsWithStatsUpdatedToday()
+                         .map(pair => pair.getPair())
+                         .reduce((prev, current) => prev.concat(current), []);
+        const membersWithUpdatedStats = new Set(updatedMembers);
+        const membersWithoutUpdatedStats = this.peopleStore.getMemberList().filter(member => !membersWithUpdatedStats.has(member));
+        return membersWithoutUpdatedStats;
+    }
+
     addPair(pair) {
         pair = pair.filter(name => !!name).map(name => name.toLowerCase().trim());
         

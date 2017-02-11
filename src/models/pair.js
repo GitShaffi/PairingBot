@@ -21,6 +21,10 @@ class Pair {
 
         return this.pair.find(pairName => pairName !== name);
     }
+
+    getPair() {
+        return this.pair;
+    }
 }
 
 module.exports = Pair;

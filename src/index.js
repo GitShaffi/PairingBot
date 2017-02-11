@@ -150,6 +150,17 @@ controller.hears([/pairing stats/i], 'direct_message,direct_mention', function (
     bot.reply(message, {attachments});
 });
 
+controller.hears([/missing stats/i], 'direct_message,direct_mention', function (bot, message) {
+    const membersWithMissingStats = pairingService.getMembersWithoutStatsUpdatedToday();
+    if(membersWithMissingStats.length === 0) {
+        bot.reply(message, 'Pairing stats is up-to-date for all members! :smile:');
+        return;
+    }
+
+    let members = membersWithMissingStats.map((member) => `:small_red_triangle: ${member}`).join('\n');
+    bot.reply(message, `Pairing stats for today is missing for the below members:\n${members}`);
+});
+
 controller.hears([/^(bye|see you later|tata|ciao|adieu)/i], ['direct_message,direct_mention'], function (bot, message) {
     bot.reply(message, 'Thanks. Have a good time! :wave:');
 });
@@ -172,6 +183,7 @@ controller.hears([/^help/i], ['direct_message,direct_mention'], function (bot, m
             • `add solo <name>` \n\
             • `add pair <name1,name2>` \n\
             • `pairing stats` \n\
+            • `missing stats` \n\
             • `uptime, who are you?, what is your name?, identify yourself` \n\
             • `bye, see you later, tata, ciao, adieu`";
 
@@ -215,8 +227,8 @@ const getPairingStatsAsSlackFormattedMessage = () => {
         let fields = pairStats.filter(pairStat => pairStat.getPair().contains(member))
                           .map(pairStat => {
                                 let otherPair = pairStat.getPair().getOtherPairOf(member);
-                                let columnTitle = (!otherPair)? 'Worked Solo' : otherPair;
-                                let pairedCount = `${pairStat.getPairInfo().count} day`;
+                                let columnTitle = (!otherPair)? 'Worked Solo' : `Paired with ${otherPair}`;
+                                let pairedCount = `${pairStat.getPairInfo().count} time`;
                                 
                                 if (pairStat.getPairInfo().count > 1)
                                     pairedCount = `${pairedCount}s`;
