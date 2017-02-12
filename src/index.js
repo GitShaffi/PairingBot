@@ -165,7 +165,22 @@ controller.hears([/^notify ([a-zA-Z\s]*) at (.*)/i], 'direct_message,direct_ment
     }
 
     bot.reply(message, `Cool! You will be notified with \`${notificationName}\` at ${time.toString()} everyday.\
-    \nYou can deactivate it anytime with the message \`deactivate ${notificationName} notification\``);
+    \nYou can deactivate it anytime with the message \`deactivate ${notificationName} notification\`.`);
+});
+
+controller.hears([/^deactivate ([a-zA-Z\s]*) notification/i], 'direct_message,direct_mention', function (bot, message) {
+    const notificationName = message.match[1].trim().toLowerCase();
+    if(!notificationService.isValidNotification(notificationName)){
+        bot.reply(message, 'Sorry, the notification type specified is invalid.\nReply with \`help\` to see list of supported messages.');
+        return;
+    }
+    
+    if(!notificationService.unSubscribe(notificationName)){
+        bot.reply(message, `You do not have \`${notificationName}\` in your existing subscription.`);
+        return;
+    }
+
+    bot.reply(message, `You have been unsubscribed from \`${notificationName}\` notification.`);
 });
 
 controller.hears([/^pairing stats/i], 'direct_message,direct_mention', function (bot, message) {
@@ -201,6 +216,8 @@ controller.hears([/^help/i], ['direct_message,direct_mention'], function (bot, m
             • `missing stats` \n\
             • `notify pairing stats at <time>` \n\
             • `notify missing stats at <time>` \n\
+            • `deactivate pairing stats notification` \n\
+            • `deactivate missing stats notification` \n\
             • `uptime, who are you?, what is your name?, identify yourself` \n\
             • `bye, see you later, tata, ciao, adieu`\n \
     Accepted time formats:\

@@ -27,11 +27,17 @@ class NotificationService {
         return true
     }
 
-    unsubsribe(name) {
+    unSubscribe(name) {
         const existingJob = this._crons[name];
         
-        if(existingJob)
-            existingJob.destroy();
+        if(existingJob) {
+            existingJob.stop();
+            delete this._crons[name];
+            this._notificationStore.removeNotification(name);
+            return true;
+        }
+
+        return false;
     }
 
     _createCronJob(name, time, channel) {
@@ -46,7 +52,7 @@ class NotificationService {
 
     _sendNotification(name, channel) {
         const notificationMessage = this._notificationsConfig.get(name);
-        this._notificationCallback({channel, text: `@here Your notification for \`${name}\`:`});
+        this._notificationCallback({channel, text: `@here Your notification for \`${name}\`.`});
         this._notificationCallback(Object.assign({channel}, notificationMessage()));
     }
 

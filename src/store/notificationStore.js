@@ -14,6 +14,13 @@ class NotificationStore {
         this._saveChannelToJsonStore();
     }
 
+    removeNotification(name, time, channel) {
+        this._notifications.splice(this._notifications.findIndex(
+                                            (notification) => notification.name === name
+                                    ), 1);
+        this._saveChannelToJsonStore();
+    }
+
     getNotifications() {
         return this._notifications;
     }
