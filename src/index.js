@@ -5,11 +5,13 @@ if (!process.env.token) {
 
 const Botkit = require('Botkit');
 const os = require('os');
-const randomColor = require('randomcolor');
 const PairingService = require('./service/pairingService');
+const NotificationService = require('./service/notificationService');
 const CommonUtils = require('./utils/commonUtils');
 const PairingStore = require('./store/pairingStore');
 const PeopleStore = require('./store/peopleStore')
+const NotificationStore = require('./store/notificationStore')
+const Time = require('time-js');
 
 const controller = Botkit.slackbot({
     debug: false
@@ -20,9 +22,15 @@ const bot = controller.spawn({
     retry: 5
 }).startRTM();
 
+const sendMessage = (message) => {
+    bot.say(message);
+}
+
 const peopleStore = new PeopleStore();
 const pairingStore = new PairingStore();
+const notificationStore = new NotificationStore();
 const pairingService = new PairingService(peopleStore, pairingStore);
+const notificationService = new NotificationService(notificationStore, pairingService, sendMessage);
 const commonUtils = new CommonUtils();
 
 controller.on('rtm_open',function(bot) {
@@ -119,7 +127,7 @@ controller.hears([/add solo ([a-zA-Z]*)/i], 'direct_message,direct_mention', fun
 });
 
 controller.hears([/add pair ([a-zA-Z]*)(?:,\s?)([a-zA-Z]*)/i], 'direct_message,direct_mention', function (bot, message) {
-    let pair = [match[1], match[2]];
+    let pair = [message.match[1], message.match[2]];
     if(pairingService.addPair(pair)) {
         bot.reply(message, `Added ${pair[0]} and ${pair[1]} to today's stats :thumbsup:`);
         return;
@@ -139,26 +147,33 @@ controller.hears(['uptime', 'identify yourself', 'who are you', 'what is your na
 
     });
 
-controller.hears([/pairing stats/i], 'direct_message,direct_mention', function (bot, message) {
-    if (!pairingService.getPairingStats()) {
-        bot.reply(message, 'Sorry, no stats available currently! :disappointed:');
+controller.hears([/^notify ([a-zA-Z\s]*) at (.*)/i], 'direct_message,direct_mention', function (bot, message) {
+    const notificationName = message.match[1].trim().toLowerCase();
+    if(!notificationService.isValidNotification(notificationName)){
+        bot.reply(message, 'Sorry, the notification type specified is invalid.\nReply with \`help\` to see list of supported messages.');
         return;
     }
 
-    let attachments = getPairingStatsAsSlackFormattedMessage();
+    const time = Time(message.match[2].trim());
+    if(!time.isValid()){
+        bot.reply(message, 'Sorry, the time specified is invalid.\nReply with \`help\` to see list of supported messages.');
+        return;
+    }
+    if(!notificationService.subscribe(notificationName, time, message.channel)){
+        bot.reply(message, 'You have already subscribed for the notification.\nIf you intend to update, deactivate existing notification and try again.');
+        return;
+    }
 
-    bot.reply(message, {attachments});
+    bot.reply(message, `Cool! You will be notified with \`${notificationName}\` at ${time.toString()} everyday.\
+    \nYou can deactivate it anytime with the message \`deactivate ${notificationName} notification\``);
 });
 
-controller.hears([/missing stats/i], 'direct_message,direct_mention', function (bot, message) {
-    const membersWithMissingStats = pairingService.getMembersWithoutStatsUpdatedToday();
-    if(membersWithMissingStats.length === 0) {
-        bot.reply(message, 'Pairing stats is up-to-date for all members! :smile:');
-        return;
-    }
+controller.hears([/^pairing stats/i], 'direct_message,direct_mention', function (bot, message) {
+    bot.reply(message, pairingService.getPairingStatsMessage());
+});
 
-    let members = membersWithMissingStats.map((member) => `:small_red_triangle: ${member}`).join('\n');
-    bot.reply(message, `Pairing stats for today is missing for the below members:\n${members}`);
+controller.hears([/^missing stats/i], 'direct_message,direct_mention', function (bot, message) {
+    bot.reply(message, pairingService.getMissingStatsMessage());
 });
 
 controller.hears([/^(bye|see you later|tata|ciao|adieu)/i], ['direct_message,direct_mention'], function (bot, message) {
@@ -184,8 +199,12 @@ controller.hears([/^help/i], ['direct_message,direct_mention'], function (bot, m
             • `add pair <name1,name2>` \n\
             • `pairing stats` \n\
             • `missing stats` \n\
+            • `notify pairing stats at <time>` \n\
+            • `notify missing stats at <time>` \n\
             • `uptime, who are you?, what is your name?, identify yourself` \n\
-            • `bye, see you later, tata, ciao, adieu`";
+            • `bye, see you later, tata, ciao, adieu`\n \
+    Accepted time formats:\
+    ( `hh:mm` / `h`  / `h.mm` / `hpm` / `h:mm a` / `h:mm a` / `h.mm am` / `h.mm A` / `hh:mm a.m.` / `h:mma` )";
 
     bot.reply(message, response);
 });
@@ -217,43 +236,4 @@ const isTeamConfigured = (bot, message) => {
     }
 
     return true;
-}
-
-const getPairingStatsAsSlackFormattedMessage = () => {
-    let pairStats = pairingService.getPairingStats();
-    let message = peopleStore.getMemberList().map(member => {
-        let mostRecentUpdatedAt = 0;
-        
-        let fields = pairStats.filter(pairStat => pairStat.getPair().contains(member))
-                          .map(pairStat => {
-                                let otherPair = pairStat.getPair().getOtherPairOf(member);
-                                let columnTitle = (!otherPair)? 'Worked Solo' : `Paired with ${otherPair}`;
-                                let pairedCount = `${pairStat.getPairInfo().count} time`;
-                                
-                                if (pairStat.getPairInfo().count > 1)
-                                    pairedCount = `${pairedCount}s`;
-                                
-                                mostRecentUpdatedAt = Math.max(pairStat.getPairInfo().timeStamp, mostRecentUpdatedAt); 
-
-                                return { title: columnTitle, value: pairedCount, short: true };
-                            });
-        
-        if(!fields.length)
-            return;
-        
-        let updatedAtInEpoch = mostRecentUpdatedAt/1000;
-        
-        return {
-            fallback: "Attachments not supported in your app. Please contact slack support for help.",
-            color: randomColor({luminosity: 'dark'}),
-            pretext: '-----------------------------------------------------------------------------------',
-            title: `Pairing stats for ${member.toUpperCase()}`,
-            text: '---------------------------------------',
-            footer: 'Last updated',
-            ts: updatedAtInEpoch,
-            fields
-        }
-    }).filter(attachment => !!attachment);
-
-    return message;
 }

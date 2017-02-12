@@ -26,8 +26,10 @@
   "license": "MIT",
   "dependencies": {
     "botkit": "^0.4.9",
+    "cron": "^1.2.1",
     "fuzzy-matching": "^0.4.3",
     "jfs": "^0.2.6",
-    "randomcolor": "^0.4.4"
+    "randomcolor": "^0.4.4",
+    "time-js": "^0.0.5"
   }
 }

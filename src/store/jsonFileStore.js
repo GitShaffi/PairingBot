@@ -11,6 +11,17 @@ class JsonFileStore {
         });
     }
 
+    getSyncData(storeName){
+        let data = this.db.getSync(storeName);
+        
+        if(data.message) {
+            console.log('Store retrieve failed');
+            data = null;
+        }
+
+        return data;
+    }
+
     save(storeName, data, callback) {
         this.db.save(storeName, data, function (err) {
             callback(err);

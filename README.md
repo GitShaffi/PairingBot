@@ -30,8 +30,13 @@ Slack bot to track pairing stats of agile pair programming team via git commits.
 - `add pair <name1,name2>`
 - `pairing stats?`
 - `missing stats?`
+- `notify pairing stats at <time>`
+- `notify missing stats at <time>`
 - `uptime, who are you?`
 - `bye, see you later, tata, ciao, adieu`
+
+Accepted time formats:
+( `hh:mm` / `h`  / `h.mm` / `hpm` / `h:mm a` / `h:mm a` / `h.mm am` / `h.mm A` / `hh:mm a.m.` / `h:mma` )
 
 ## Install and Setup instructions
 
