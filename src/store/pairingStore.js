@@ -3,58 +3,51 @@ const Pair = require('../models/pair');
 const PairStat = require('../models/pairStat');
 const CommonUtils = require('../utils/commonUtils');
 
-class PairingStore {
+class PairingStore extends JsonFileStore {
 
     constructor() {
-        this.fileStoreName = 'pairingStore';
-        this.jsonStore = new JsonFileStore();
-        this.pairingStore = {};
-        this.pairingStats = null;
-        this.commonUtils = new CommonUtils();
+        super();
+        this._fileStoreName = 'pairingStore';
+        this._pairingStore = {};
+        this._pairingStats = null;
         this._initializePairingStore();
     }
 
     saveCurrentStatToJsonStore() {
-        this.jsonStore.save(this.fileStoreName, this.pairingStore, (err) => {
-            if (err) {
-                console.log('Store update failed');
-            }
-        })
+        this.save(this._fileStoreName, this._pairingStore);
     }
 
     getPairingStats() {
-        let pairs = Object.keys(this.pairingStore);
+        let pairs = Object.keys(this._pairingStore);
 
         if (!pairs.length) {
             return null;
         }
 
-        let pairingStats = [];
-        pairs.forEach((pairString) => {
+        let pairingStats = pairs.map((pairString) => {
             let pair = new Pair(pairString);
-            let pairInfo = this.pairingStore[pairString];
-            pairingStats.push(new PairStat(pair, pairInfo));
+            let pairInfo = this._pairingStore[pairString];
+            return new PairStat(pair, pairInfo);
         });
 
         return pairingStats;
     }
 
     getPairsWithStatsUpdatedToday() {
-        let pairs = Object.keys(this.pairingStore);
-
+        let pairs = Object.keys(this._pairingStore);
         if (!pairs.length) {
-            return null;
+            return [];
         }
         const pairsWithStatsUpdatedToday = pairs.filter(pairString => {
-            let pairInfo = this.pairingStore[pairString];
-            return this.commonUtils.isToday(pairInfo.timeStamp);
+            let pairInfo = this._pairingStore[pairString];
+            return CommonUtils.isToday(pairInfo.timeStamp);
         }).map((pairString) => new Pair(pairString));
 
         return pairsWithStatsUpdatedToday;
     }
 
     getPairInfo(pairString) {
-        return this.pairingStore[pairString];
+        return this._pairingStore[pairString];
     }
 
     updatePairInfo(pair, pairInfo) {
@@ -64,7 +57,7 @@ class PairingStore {
                 pairInfo.timeStamp = new Date().getTime();
             }
         } else {
-            pairInfo = this.pairingStore[pair.toString()] = {
+            pairInfo = this._pairingStore[pair.toString()] = {
                 count: 1,
                 timeStamp: new Date().getTime()
             }
@@ -73,16 +66,12 @@ class PairingStore {
     }
     
     _isAlreadyUpdatedForCurrentDay(pairInfo) {
-        return this.commonUtils.isToday(pairInfo.timeStamp);
+        return CommonUtils.isToday(pairInfo.timeStamp);
     }
 
     _initializePairingStore() {
-        this.jsonStore.getData(this.fileStoreName, (data, err) => {
-            if (err) {
-                console.log('Store retrieve failed');
-                return;
-            }
-            this.pairingStore = data;
+        this.getData(this._fileStoreName, (data) => {
+                this._pairingStore = (data)? data : this._pairingStore;
         });
     }
 }

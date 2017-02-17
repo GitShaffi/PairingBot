@@ -1,10 +1,10 @@
 const JsonFileStore = require('./jsonFileStore');
 
-class NotificationStore {
+class NotificationStore extends JsonFileStore {
 
     constructor() {
+        super();
         this._fileStoreName = 'notificationStore';
-        this._jsonStore = new JsonFileStore();
         this._notifications = [];
         this._initializeNotificationStore();
     }
@@ -26,15 +26,11 @@ class NotificationStore {
     }
 
     _saveChannelToJsonStore() {
-        this._jsonStore.save(this._fileStoreName, this._notifications, (err) => {
-            if (err) {
-                console.log('Store update failed');
-            }
-        })
+        this.save(this._fileStoreName, this._notifications);
     }
 
     _initializeNotificationStore() {
-        const data = this._jsonStore.getSyncData(this._fileStoreName);
+        const data = this.getSyncData(this._fileStoreName);
         this._notifications = (data)? data : [];
     }
 }

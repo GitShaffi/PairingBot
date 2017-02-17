@@ -1,15 +1,15 @@
 class PairStat {
     constructor(pair, pairInfo) {
-        this.pair = pair;
-        this.pairInfo = pairInfo;
+        this._pair = pair;
+        this._pairInfo = pairInfo;
     }
 
     getPair() {
-        return this.pair;
+        return this._pair;
     }
 
     getPairInfo() {
-        return this.pairInfo;
+        return this._pairInfo;
     }
 }
 

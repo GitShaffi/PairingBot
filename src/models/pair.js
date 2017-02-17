@@ -1,29 +1,29 @@
 class Pair {
     constructor(pairString) {
-        this.pair = pairString.split(',');
+        this._pair = pairString.split(',');
     }
 
     isSolo() {
-        return this.pair.length === 1;
+        return this._pair.length === 1;
     }
 
     toString() {
-        return this.pair.join(',');
+        return this._pair.join(',');
     }
 
     contains(name) {
-        return this.pair.includes(name);
+        return this._pair.includes(name);
     }
 
     getOtherPairOf(name) {
         if(this.isSolo())
             return null;
 
-        return this.pair.find(pairName => pairName !== name);
+        return this._pair.find(pairName => pairName !== name);
     }
 
     getPair() {
-        return this.pair;
+        return this._pair;
     }
 }
 

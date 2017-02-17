@@ -3,8 +3,8 @@ const randomColor = require('randomcolor');
 class PairingService {
     
     constructor(peopleStore, pairingStore) {
-        this.peopleStore = peopleStore;
-        this.pairingStore = pairingStore;
+        this._peopleStore = peopleStore;
+        this._pairingStore = pairingStore;
     }
 
     processCommitFrom(message) {
@@ -27,7 +27,7 @@ class PairingService {
         }); 
 
         if (matchFound) {
-            this.pairingStore.saveCurrentStatToJsonStore();
+            this._pairingStore.saveCurrentStatToJsonStore();
         }
     }
 
@@ -37,7 +37,7 @@ class PairingService {
         if(!this._updatePairInfoFor(pair))
             return false;
         
-        this.pairingStore.saveCurrentStatToJsonStore();
+        this._pairingStore.saveCurrentStatToJsonStore();
         return true;
     }
     
@@ -65,12 +65,12 @@ class PairingService {
     }
     
     _getPairingStats() {
-        return this.pairingStore.getPairingStats();
+        return this._pairingStore.getPairingStats();
     }
 
     _getPairingStatsAsSlackFormattedMessage() {
         let pairStats = this._getPairingStats();
-        let message = this.peopleStore.getMemberList().map(member => {
+        let message = this._peopleStore.getMemberList().map(member => {
             let mostRecentUpdatedAt = 0;
             
             let fields = pairStats.filter(pairStat => pairStat.getPair().contains(member))
@@ -108,11 +108,11 @@ class PairingService {
     }
 
     _getMembersWithoutStatsUpdatedToday(){
-        const updatedMembers = this.pairingStore.getPairsWithStatsUpdatedToday()
+        const updatedMembers = this._pairingStore.getPairsWithStatsUpdatedToday()
                          .map(pair => pair.getPair())
                          .reduce((prev, current) => prev.concat(current), []);
         const membersWithUpdatedStats = new Set(updatedMembers);
-        const membersWithoutUpdatedStats = this.peopleStore.getMemberList().filter(member => !membersWithUpdatedStats.has(member));
+        const membersWithoutUpdatedStats = this._peopleStore.getMemberList().filter(member => !membersWithUpdatedStats.has(member));
         return membersWithoutUpdatedStats;
     }
 
@@ -125,7 +125,7 @@ class PairingService {
         }
 
         let pairInfo = this._findPairInfo(pairMatch);
-        this.pairingStore.updatePairInfo(pairMatch, pairInfo);
+        this._pairingStore.updatePairInfo(pairMatch, pairInfo);
         return true;
     }
 
@@ -145,14 +145,14 @@ class PairingService {
     }
 
     _findPairInfo(pairMatch) {
-        let pairInfo = (pairMatch.length > 1)? this.pairingStore.getPairInfo(pairMatch.toString()) 
-                                                        || this.pairingStore.getPairInfo(`${pairMatch[1]},${pairMatch[0]}`)
-                                            : this.pairingStore.getPairInfo(pairMatch.toString());
+        let pairInfo = (pairMatch.length > 1)? this._pairingStore.getPairInfo(pairMatch.toString()) 
+                                                        || this._pairingStore.getPairInfo(`${pairMatch[1]},${pairMatch[0]}`)
+                                            : this._pairingStore.getPairInfo(pairMatch.toString());
         return pairInfo;
     }
 
     _findNearestMatch(pair) {
-        return pair.map(name => this.peopleStore.getMembersFuzzyMatch(name).value);
+        return pair.map(name => this._peopleStore.getMembersFuzzyMatch(name).value);
     }
 }
 

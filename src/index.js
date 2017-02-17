@@ -31,7 +31,6 @@ const pairingStore = new PairingStore();
 const notificationStore = new NotificationStore();
 const pairingService = new PairingService(peopleStore, pairingStore);
 const notificationService = new NotificationService(notificationStore, pairingService, sendMessage);
-const commonUtils = new CommonUtils();
 
 controller.on('rtm_open',function(bot) {
   console.log('** The RTM api just connected! **');
@@ -118,28 +117,32 @@ controller.hears([/remove member ([a-zA-Z]*)/i], 'direct_message,direct_mention'
 });
 
 controller.hears([/add solo ([a-zA-Z]*)/i], 'direct_message,direct_mention', function (bot, message) {
-    let pairName = message.match[1];
-    if(pairingService.addPair([pairName])) {
-        bot.reply(message, `Oh! we have a lone wolf today!\nHave updated ${pairName} to the stats :thumbsup:`);
-        return;
+    if(isTeamConfigured(bot, message)) {
+        let pairName = message.match[1];
+        if(pairingService.addPair([pairName])) {
+            bot.reply(message, `Oh! we have a lone wolf today!\nHave updated ${pairName} to the stats :thumbsup:`);
+            return;
+        }
+        bot.reply(message, `Unable to identify \`${pairName}\` in the team :white_frowning_face:`);
     }
-    bot.reply(message, `Unable to identify ${pairName} in the team :white_frowning_face:`);
 });
 
 controller.hears([/add pair ([a-zA-Z]*)(?:,\s?)([a-zA-Z]*)/i], 'direct_message,direct_mention', function (bot, message) {
-    let pair = [message.match[1], message.match[2]];
-    if(pairingService.addPair(pair)) {
-        bot.reply(message, `Added ${pair[0]} and ${pair[1]} to today's stats :thumbsup:`);
-        return;
+    if(isTeamConfigured(bot, message)){
+        let pair = [message.match[1], message.match[2]];
+        if(pairingService.addPair(pair)) {
+            bot.reply(message, `Added ${pair[0]} and ${pair[1]} to today's stats :thumbsup:`);
+            return;
+        }
+        bot.reply(message, `Unable to identify \`${pair.join(' / ')}\` in the team :white_frowning_face:`);
     }
-    bot.reply(message, `Unable to identify ${pair.toString()} in the team :white_frowning_face:`);
 });
 
 controller.hears(['uptime', 'identify yourself', 'who are you', 'what is your name'],
     'direct_message,direct_mention', function (bot, message) {
 
         const hostname = os.hostname();
-        const uptime = commonUtils.formatTime(process.uptime());
+        const uptime = CommonUtils.formatTime(process.uptime());
 
         bot.reply(message,
             ':robot_face: I am a bot named <@' + bot.identity.name +
@@ -188,7 +191,9 @@ controller.hears([/^pairing stats/i], 'direct_message,direct_mention', function 
 });
 
 controller.hears([/^missing stats/i], 'direct_message,direct_mention', function (bot, message) {
-    bot.reply(message, pairingService.getMissingStatsMessage());
+    if (isTeamConfigured(bot, message)) {
+        bot.reply(message, pairingService.getMissingStatsMessage());
+    }
 });
 
 controller.hears([/^(bye|see you later|tata|ciao|adieu)/i], ['direct_message,direct_mention'], function (bot, message) {
@@ -248,8 +253,9 @@ const isTeamConfigured = (bot, message) => {
 
     if(peopleStore.getMemberList().length !== peopleStore.getExpectedMemberCount()) {
         bot.reply(message, `(*${peopleStore.getMemberList().length}/${peopleStore.getExpectedMemberCount()}*)`
-                + ' member added. Please complete the list to start tracking.'
+                + ' members added. Please complete the list to start tracking.'
         );
+        return false;
     }
 
     return true;

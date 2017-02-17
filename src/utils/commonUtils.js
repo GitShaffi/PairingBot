@@ -1,5 +1,5 @@
 class CommonUtils {
-    formatTime(time) {
+    static formatTime(time) {
         var unit = 'second';
         if (time > 60) {
             time = time / 60;
@@ -17,7 +17,7 @@ class CommonUtils {
         return time;
     }
 
-    isToday(timeStamp) {
+    static isToday(timeStamp) {
         let today = new Date().toDateString();
         let lastUpdatedDate = new Date(timeStamp).toDateString();
         return lastUpdatedDate === today;

@@ -52,7 +52,7 @@ class NotificationService {
 
     _sendNotification(name, channel) {
         const notificationMessage = this._notificationsConfig.get(name);
-        this._notificationCallback({channel, text: `@here Your notification for \`${name}\`.`});
+        this._notificationCallback({channel, text: `<!channel> Your notification for \`${name}\`.`});
         this._notificationCallback(Object.assign({channel}, notificationMessage()));
     }
 
