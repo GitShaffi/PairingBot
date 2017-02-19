@@ -1,5 +1,5 @@
-var FuzzyMatching = require('fuzzy-matching');
-var JsonFileStore = require('./jsonFileStore');
+const FuzzyMatching = require('fuzzy-matching');
+const JsonFileStore = require('./jsonFileStore');
 
 class PeopleStore extends JsonFileStore {
 
@@ -45,7 +45,7 @@ class PeopleStore extends JsonFileStore {
 
     removeMember(memberName) {
         memberName = memberName.toLowerCase().trim()
-        var index = this._memberList.indexOf(memberName);
+        const index = this._memberList.indexOf(memberName);
         if (index === -1) {
             return false;
         }

@@ -1,6 +1,6 @@
 class CommonUtils {
     static formatTime(time) {
-        var unit = 'second';
+        let unit = 'second';
         if (time > 60) {
             time = time / 60;
             unit = 'minute';

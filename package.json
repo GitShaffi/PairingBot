@@ -2,10 +2,13 @@
   "name": "pairing-bot",
   "version": "1.0.1",
   "description": "A bot to track pairing from git commit, post stats and do suggestions.",
-  "main": "index.js",
+  "main": "pairingBot.js",
+  "bin": {
+    "pairing-bot": "bin/pairingBot.js"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node src/index.js"
+    "start": "node bin/pairingBot.js"
   },
   "repository": {
     "type": "git",
@@ -22,7 +25,7 @@
     "programming",
     "slack"
   ],
-  "author": "Shaffi",
+  "author": "Mohammed Shaffi",
   "license": "MIT",
   "dependencies": {
     "botkit": "^0.4.9",

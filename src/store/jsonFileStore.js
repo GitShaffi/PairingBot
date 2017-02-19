@@ -1,4 +1,4 @@
-var Store = require("jfs");
+const Store = require("jfs");
 
 class JsonFileStore {
     constructor() {
