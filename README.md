@@ -42,6 +42,18 @@ Accepted time formats:
 
 ## Install and Setup instructions
 
+```sh
+npm install -g pairing-bot
+
+token=<slack-token> pairing-bot
+```
+or set token to ENV and execute
+```sh
+pairing-bot
+```
+
+## Development
+
 After cloning the repository and running `npm install` or `yarn install` inside, you can use the following command to start the bot.
 
 ```sh
