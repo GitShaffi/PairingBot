@@ -1,12 +1,13 @@
 const Botkit = require('Botkit');
 const os = require('os');
+const Time = require('time-js');
 const PairingService = require('./service/pairingService');
 const NotificationService = require('./service/notificationService');
 const CommonUtils = require('./utils/commonUtils');
 const PairingStore = require('./store/pairingStore');
 const PeopleStore = require('./store/peopleStore')
 const NotificationStore = require('./store/notificationStore')
-const Time = require('time-js');
+const Server = require('./server.js')
 
 class PairingBot {
     constructor() {
@@ -34,6 +35,7 @@ class PairingBot {
         this._notificationStore = new NotificationStore();
         this._pairingService = new PairingService(this._peopleStore, this._pairingStore);
         this._notificationService = new NotificationService(this._notificationStore, this._pairingService, this.sendMessage);
+        this._uiServer = new Server();
     }
 
     start() {
@@ -44,6 +46,8 @@ class PairingBot {
                         .startRTM();
 
         this._setupBotController();
+
+        // this._uiServer.start();
     }
 
     sendMessage(message) {
@@ -87,11 +91,12 @@ class PairingBot {
 
         this._botController.hears([/^deactivate ([a-zA-Z\s]*) notification/i], 'direct_message,direct_mention', this._deactivateNotification);
 
-        this._botController.hears([/^pairing stats/i], 'direct_message,direct_mention', (bot, message) => {
+        this._botController.hears([/pairing stats/i], 'direct_message,direct_mention', (bot, message) => {
             bot.reply(message, this._pairingService.getPairingStatsMessage());
+            bot.reply(message, this._uiServer.getStatsUrl());
         });
 
-        this._botController.hears([/^missing stats/i], 'direct_message,direct_mention', (bot, message) => {
+        this._botController.hears([/missing stats/i], 'direct_message,direct_mention', (bot, message) => {
             if (this._isTeamConfigured(bot, message)) {
                 bot.reply(message, this._pairingService.getMissingStatsMessage());
             }
